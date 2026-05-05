@@ -502,6 +502,7 @@
 }
 
 .education-chart {
+  position: relative;
   min-height: 360px;
   width: 100%;
   flex: 1;
@@ -511,6 +512,182 @@
     opacity 320ms ease-in-out,
     max-height 320ms ease-in-out,
     transform 320ms ease-in-out;
+}
+
+.education-chart .am5exporting-menu {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 6;
+  font-family: var(--body-font);
+}
+
+.education-chart .am5exporting-icon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-glass) 88%, transparent);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.education-chart .am5exporting-icon:hover,
+.education-chart .am5exporting-icon:focus,
+.education-chart .am5exporting-menu-open .am5exporting-icon {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 12px 28px rgba(11, 29, 42, 0.2);
+  outline: none;
+}
+
+.education-chart .am5exporting-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.education-chart .am5exporting-menu path {
+  fill: var(--text-strong);
+}
+
+.education-chart .am5exporting-list {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  min-width: 180px;
+  max-height: min(360px, calc(100vh - 120px));
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(16px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transform-origin: top right;
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease,
+    visibility 220ms ease;
+}
+
+.education-chart .am5exporting-menu-open .am5exporting-list {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.education-chart .am5exporting-item {
+  margin: 0;
+}
+
+.education-chart .am5exporting-item a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  color: var(--text-main);
+  font-size: 0.95rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.education-chart .am5exporting-item a:hover,
+.education-chart .am5exporting-item a:focus,
+.education-chart .am5exporting-item a.am5exporting-item-active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: var(--accent);
+  color: var(--text-strong);
+  outline: none;
+}
+
+.education-chart .am5exporting-label-alt {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.education-chart .am5exporting-type-separator a {
+  min-height: auto;
+  padding: 0.55rem 0.9rem 0.35rem;
+  border: none;
+  color: var(--text-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: default;
+}
+
+.education-chart .am5exporting-type-separator a:hover,
+.education-chart .am5exporting-type-separator a:focus {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-strong);
+}
+
+@media (max-width: 760px) {
+  .education-chart .am5exporting-menu {
+    top: 12px;
+    right: 12px;
+  }
+
+  .education-chart .am5exporting-list {
+    top: 48px;
+    right: 0;
+    min-width: 168px;
+    max-width: min(220px, calc(100vw - 64px));
+    max-height: min(320px, calc(100vh - 96px));
+  }
+}
+
+.education-chart .am5exporting-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.education-chart .am5exporting-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.education-chart .am5exporting-list::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent) 72%, var(--surface));
+  border-radius: 999px;
+}
+
+.education-chart .am5exporting-list::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
 
 @media (hover: hover) and (pointer: fine) and (min-width: 1121px) {

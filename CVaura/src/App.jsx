@@ -9,6 +9,7 @@ import {
 } from "react";
 import * as am5 from "@amcharts/amcharts5";
 import * as am5percent from "@amcharts/amcharts5/percent";
+import * as am5plugins_exporting from "@amcharts/amcharts5/plugins/exporting";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import emailjs from "@emailjs/browser";
 import "./App.css";
@@ -699,6 +700,16 @@ function EducationChart({ data, theme, title }) {
 
     applyChartTextTheme({ root, theme, series, legend, chartTitle });
     legend.data.setAll(series.dataItems);
+
+    const exporting = am5plugins_exporting.Exporting.new(root, {
+      dataSource: data,
+      menu: am5plugins_exporting.ExportingMenu.new(root, {
+        align: "right",
+        valign: "top",
+        useDefaultCSS: false,
+      }),
+    });
+
     series.appear(1000, 100);
 
     const resizeObserver = new ResizeObserver(() => {
@@ -711,6 +722,7 @@ function EducationChart({ data, theme, title }) {
 
     return () => {
       resizeObserver.disconnect();
+      exporting.dispose();
       root.dispose();
     };
   }, [data, theme, title]);
