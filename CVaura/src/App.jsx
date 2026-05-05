@@ -2,6 +2,7 @@ import {
   startTransition,
   useEffect,
   useEffectEvent,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -442,21 +443,26 @@ function usePortfolioData() {
   return { profile, contacts, labels, emojiPresets };
 }
 
+function resolveInitialTheme() {
+  if (typeof window === "undefined") {
+    return "dark";
+  }
+
+  const storedTheme = window.localStorage.getItem("cvaura-theme");
+
+  if (storedTheme === "light" || storedTheme === "dark") {
+    return storedTheme;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
 function useTheme() {
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState(resolveInitialTheme);
 
-  useEffect(() => {
-    const storedTheme = window.localStorage.getItem("cvaura-theme");
-    const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)")
-      .matches
-      ? "dark"
-      : "light";
-    const nextTheme = storedTheme || preferredTheme;
-    setTheme(nextTheme);
-    document.documentElement.dataset.theme = nextTheme;
-  }, []);
-
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem("cvaura-theme", theme);
   }, [theme]);
@@ -531,6 +537,43 @@ function getContrastColor(theme, tone = "main") {
   return palette[tone] ?? palette.main;
 }
 
+const CHART_BASE_COLORS = {
+  dark: ["#89C184", "#A7C7E7", "#6B5E4A", "#D6CFC7", "#4A6FA5", "#6b4b8e"],
+  light: ["#0DB0C0", "#F28D35", "#5B7C99", "#7FA36B", "#816B54", "#405e38"],
+};
+
+function generateUniqueColors(count, theme) {
+  const palette = CHART_BASE_COLORS[theme] ?? CHART_BASE_COLORS.dark;
+  const uniqueColors = [];
+  const seen = new Set();
+
+  const pushColor = (color) => {
+    const normalized = color.toLowerCase();
+
+    if (seen.has(normalized)) {
+      return false;
+    }
+
+    seen.add(normalized);
+    uniqueColors.push(color);
+    return true;
+  };
+
+  palette.forEach(pushColor);
+
+  let index = 0;
+
+  while (uniqueColors.length < count) {
+    const hue = Math.round((index * 137.5) % 360);
+    const saturation = theme === "dark" ? 46 : 58;
+    const lightness = theme === "dark" ? 62 : 44;
+    pushColor(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+    index += 1;
+  }
+
+  return uniqueColors.slice(0, count);
+}
+
 function applyChartTextTheme({ root, theme, series, legend, chartTitle }) {
   const strong = am5.Color.fromString(getContrastColor(theme, "strong"));
   const main = am5.Color.fromString(getContrastColor(theme, "main"));
@@ -592,12 +635,8 @@ function EducationChart({ data, theme, title }) {
 
   useEffect(() => {
     const styles = getComputedStyle(document.documentElement);
-    const textMain = styles.getPropertyValue("--text-main").trim();
-    const accent = styles.getPropertyValue("--accent").trim();
-    const accentStrong = styles.getPropertyValue("--accent-strong").trim();
-    const accentSoft = styles.getPropertyValue("--accent-soft").trim();
-    const supportBrown = styles.getPropertyValue("--support-brown").trim();
     const borderStrong = styles.getPropertyValue("--border-strong").trim();
+    const uniqueChartColors = generateUniqueColors(data.length, theme);
 
     const root = am5.Root.new(chartRef.current);
     root.setThemes([am5themes_Animated.new(root)]);
@@ -642,14 +681,8 @@ function EducationChart({ data, theme, title }) {
     series.set(
       "colors",
       am5.ColorSet.new(root, {
-        colors: [
-          am5.Color.fromString(accent),
-          am5.Color.fromString(accentStrong),
-          am5.Color.fromString(accentSoft),
-          am5.Color.fromString(supportBrown),
-          am5.Color.fromString(textMain),
-        ],
-        reuse: true,
+        colors: uniqueChartColors.map((color) => am5.Color.fromString(color)),
+        reuse: false,
       }),
     );
 
