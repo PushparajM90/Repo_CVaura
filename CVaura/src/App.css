@@ -532,35 +532,33 @@
   height: 42px;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--border-strong);
+  border: none;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-glass) 88%, transparent);
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(12px);
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: var(--button-text);
+  box-shadow: 0 16px 40px rgba(10, 21, 29, 0.28);
   cursor: pointer;
   transition:
     transform 180ms ease,
     background 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
+    box-shadow 180ms ease,
+    color 180ms ease;
 }
 
 .education-chart .am5exporting-icon:hover,
 .education-chart .am5exporting-icon:focus,
 .education-chart .am5exporting-menu-open .am5exporting-icon {
   transform: translateY(-2px);
-  border-color: var(--accent);
-  box-shadow: 0 12px 28px rgba(11, 29, 42, 0.2);
+  color: var(--button-text);
+  box-shadow: 0 22px 48px rgba(10, 21, 29, 0.35);
   outline: none;
 }
 
-.education-chart .am5exporting-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
-.education-chart .am5exporting-menu path {
-  fill: var(--text-strong);
+.education-chart .am5exporting-icon iconify-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  color: inherit;
 }
 
 .education-chart .am5exporting-list {
@@ -841,6 +839,21 @@
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.contact-link,
+.contact-copy-button {
+  min-width: 52px;
+  min-height: 52px;
+  padding: 0.8rem;
+}
+
+.contact-action-icon {
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
+  color: inherit;
+  flex-shrink: 0;
 }
 
 @media (max-width: 1120px) {

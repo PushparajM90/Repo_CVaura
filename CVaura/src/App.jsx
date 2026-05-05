@@ -631,6 +631,35 @@ function applyChartTextTheme({ root, theme, series, legend, chartTitle }) {
   }
 }
 
+function applyExportMenuIcon(menu) {
+  const replaceIcon = () => {
+    const iconElement = menu.getPrivate?.("iconElement") || menu._iconElement;
+
+    if (!iconElement) {
+      return false;
+    }
+
+    const icon = document.createElement("iconify-icon");
+    icon.setAttribute("icon", "line-md:downloading-loop");
+    icon.setAttribute("aria-hidden", "true");
+    icon.style.fontSize = "40px";
+    icon.style.width = "40px";
+    icon.style.height = "40px";
+    iconElement.replaceChildren(icon);
+    return true;
+  };
+
+  if (replaceIcon()) {
+    requestAnimationFrame(() => {
+      replaceIcon();
+    });
+  } else {
+    requestAnimationFrame(() => {
+      replaceIcon();
+    });
+  }
+}
+
 function EducationChart({ data, theme, title }) {
   const chartRef = useRef(null);
 
@@ -701,13 +730,17 @@ function EducationChart({ data, theme, title }) {
     applyChartTextTheme({ root, theme, series, legend, chartTitle });
     legend.data.setAll(series.dataItems);
 
+    const exportingMenu = am5plugins_exporting.ExportingMenu.new(root, {
+      align: "right",
+      valign: "top",
+      useDefaultCSS: false,
+    });
+
+    applyExportMenuIcon(exportingMenu);
+
     const exporting = am5plugins_exporting.Exporting.new(root, {
       dataSource: data,
-      menu: am5plugins_exporting.ExportingMenu.new(root, {
-        align: "right",
-        valign: "top",
-        useDefaultCSS: false,
-      }),
+      menu: exportingMenu,
     });
 
     series.appear(1000, 100);
@@ -937,7 +970,7 @@ function App() {
             <div className="hero-orb hero-orb-two" />
             <div className="hero-image-frame">
               <img
-                src="/legacy-assets/images/cover_profile.png"
+                src="/legacy-assets/images/light_cover_profile.png"
                 alt="Pushparaj portfolio cover artwork"
               />
             </div>
@@ -1183,15 +1216,25 @@ function App() {
                       href={item.href}
                       target="_blank"
                       rel="noreferrer"
+                      aria-label={`Open ${item.label}`}
                     >
-                      Open
+                      <iconify-icon
+                        className="contact-action-icon"
+                        icon="majesticons:open"
+                        aria-hidden="true"
+                      />
                     </a>
                     <button
                       type="button"
                       className="contact-copy-button"
                       onClick={() => handleCopy(item.label, item.value)}
+                      aria-label={`Copy ${item.label}`}
                     >
-                      Copy
+                      <iconify-icon
+                        className="contact-action-icon"
+                        icon="fluent:document-copy-24-filled"
+                        aria-hidden="true"
+                      />
                     </button>
                   </div>
                 </article>
