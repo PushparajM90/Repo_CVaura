@@ -1,5 +1,4 @@
 :root {
-  --theme-icon-color: #ffffff;
   --bg-primary: #0b1d2a;
   --bg-secondary: #1f3d2b;
   --bg-tertiary: #16261d;
@@ -45,7 +44,6 @@
 }
 
 :root[data-theme="light"] {
-  --theme-icon-color: #000000;
   --bg-primary: #eef3f9;
   --bg-secondary: #dbe6f2;
   --bg-tertiary: #ffffff;

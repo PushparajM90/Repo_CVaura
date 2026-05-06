@@ -962,6 +962,7 @@ function App() {
           }
           aria-label="Toggle theme"
         >
+          <span className="theme-stars"></span>
           <div className="i-line-md:light-dark-loop theme-toggle-icon"></div>
         </button>
       </header>
