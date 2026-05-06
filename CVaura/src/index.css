@@ -1,4 +1,5 @@
 :root {
+  --theme-icon-color: #ffffff;
   --bg-primary: #0b1d2a;
   --bg-secondary: #1f3d2b;
   --bg-tertiary: #16261d;
@@ -8,6 +9,7 @@
   --border-soft: rgba(214, 207, 199, 0.14);
   --border-strong: rgba(167, 199, 231, 0.26);
   --text-main: #eaeaea;
+  --text-primary: var(--button-text);
   --text-strong: #f7f5f1;
   --text-muted: #d6cfc7;
   --accent: #89c184;
@@ -22,14 +24,17 @@
   --selection: rgba(137, 193, 132, 0.24);
   --shadow-soft: 0 24px 80px rgba(0, 0, 0, 0.34);
   --shadow-card: 0 16px 40px rgba(0, 0, 0, 0.22);
-  --heading-font: 'Space Grotesk', 'Segoe UI', sans-serif;
-  --body-font: 'Outfit', 'Segoe UI', sans-serif;
+  --heading-font: "Space Grotesk", "Segoe UI", sans-serif;
+  --body-font: "Outfit", "Segoe UI", sans-serif;
   color: var(--text-main);
   background:
     radial-gradient(circle at top, rgba(167, 199, 231, 0.12), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(137, 193, 132, 0.12), transparent 26%),
-    linear-gradient(145deg, rgba(31, 61, 43, 0.45), transparent 42%),
-    var(--bg);
+    radial-gradient(
+      circle at bottom right,
+      rgba(137, 193, 132, 0.12),
+      transparent 26%
+    ),
+    linear-gradient(145deg, rgba(31, 61, 43, 0.45), transparent 42%), var(--bg);
   font-family: var(--body-font);
   line-height: 1.5;
   font-weight: 400;
@@ -39,7 +44,8 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-:root[data-theme='light'] {
+:root[data-theme="light"] {
+  --theme-icon-color: #000000;
   --bg-primary: #eef3f9;
   --bg-secondary: #dbe6f2;
   --bg-tertiary: #ffffff;
@@ -49,6 +55,7 @@
   --border-soft: rgba(15, 23, 42, 0.08);
   --border-strong: rgba(15, 23, 42, 0.12);
   --text-main: #29415a;
+  --text-primary: var(--button-text);
   --text-strong: #0d1b2a;
   --text-muted: #5d748c;
   --accent: #0db0c0;
@@ -80,9 +87,12 @@ body {
   color: var(--text-main);
   background:
     radial-gradient(circle at top, rgba(167, 199, 231, 0.12), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(137, 193, 132, 0.12), transparent 26%),
-    linear-gradient(145deg, rgba(31, 61, 43, 0.45), transparent 42%),
-    var(--bg);
+    radial-gradient(
+      circle at bottom right,
+      rgba(137, 193, 132, 0.12),
+      transparent 26%
+    ),
+    linear-gradient(145deg, rgba(31, 61, 43, 0.45), transparent 42%), var(--bg);
   transition:
     background-color 260ms ease,
     color 260ms ease,
@@ -90,11 +100,12 @@ body {
 }
 
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: radial-gradient(circle at center, black, transparent 85%);

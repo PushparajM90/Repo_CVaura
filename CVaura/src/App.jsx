@@ -267,14 +267,38 @@ const DEFAULT_CONTACTS = {
 };
 
 const CONTACT_META = {
-  email_icon: { label: "Email", glyph: "?" },
-  linkedin_icon: { label: "LinkedIn", glyph: "in" },
-  number_icon: { label: "Phone", glyph: "?" },
-  whatsapp_icon: { label: "WhatsApp", glyph: "WA" },
-  github_icon: { label: "GitHub", glyph: "GH" },
-  facebook_icon: { label: "Facebook", glyph: "f" },
-  instagram_icon: { label: "Instagram", glyph: "IG" },
-  youtube_icon: { label: "YouTube", glyph: "YT" },
+  email_icon: {
+    label: "Email",
+    iconClass: "i-logos:google-gmail w-63.67px h-48px",
+  },
+  linkedin_icon: {
+    label: "LinkedIn",
+    iconClass: "i-skill-icons:linkedin w-48px h-48px",
+  },
+  number_icon: {
+    label: "Phone",
+    iconClass: "i-ic:baseline-phone-in-talk w-48px h-48px",
+  },
+  whatsapp_icon: {
+    label: "WhatsApp",
+    iconClass: "i-logos:whatsapp-icon w-47.63px h-48px",
+  },
+  github_icon: {
+    label: "GitHub",
+    iconClass: "i-skill-icons:github-light w-48px h-48px",
+  },
+  facebook_icon: {
+    label: "Facebook",
+    iconClass: "i-logos:facebook w-48px h-48px",
+  },
+  instagram_icon: {
+    label: "Instagram",
+    iconClass: "i-skill-icons:instagram w-48px h-48px",
+  },
+  youtube_icon: {
+    label: "YouTube",
+    iconClass: "i-logos:youtube-icon w-68.27px h-48px",
+  },
 };
 
 const DEFAULT_LABELS = {
@@ -803,7 +827,7 @@ function App() {
         label: labels[id] || CONTACT_META[id].label,
         value: contacts[id] || "",
         href: resolveContactHref(id, contacts[id] || ""),
-        glyph: CONTACT_META[id].glyph,
+        iconClass: CONTACT_META[id].iconClass,
       })),
     [contacts, labels],
   );
@@ -938,7 +962,7 @@ function App() {
           }
           aria-label="Toggle theme"
         >
-          {theme === "dark" ? "Light mode" : "Dark mode"}
+          <div className="i-line-md:light-dark-loop theme-toggle-icon"></div>
         </button>
       </header>
 
@@ -962,7 +986,11 @@ function App() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Download Resume
+                <div
+                  className="resume-download-icon i-line-md:downloading-loop  w-48px h-48px"
+                  aria-hidden="true"
+                />
+                <span>Resume</span>
               </a>
               <button
                 type="button"
@@ -1219,7 +1247,7 @@ function App() {
               {contactCards.map((item) => (
                 <article key={item.id} className="glass-card contact-card">
                   <div className="contact-icon" aria-hidden="true">
-                    {item.glyph}
+                    <div className={item.iconClass}></div>
                   </div>
                   <div className="contact-copy">
                     <p>{item.label}</p>
