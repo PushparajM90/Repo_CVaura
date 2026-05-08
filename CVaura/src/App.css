@@ -262,6 +262,14 @@
   background: linear-gradient(90deg, var(--accent), var(--highlight));
 }
 
+.swal2-container {
+  z-index: 10000;
+}
+
+.themed-mail-popup {
+  width: min(360px, calc(100vw - 32px));
+}
+
 .section-block {
   scroll-margin-top: 110px;
   margin-bottom: 28px;
@@ -910,13 +918,31 @@
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
+  justify-content: center;
 }
 
 .emoji-preset {
+  display: grid;
+  place-items: center;
   width: 48px;
   height: 48px;
   padding: 0;
-  font-size: 1.25rem;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 24%, transparent),
+    color-mix(in srgb, var(--highlight) 24%, transparent)
+  );
+}
+
+.emoji-icon {
+  display: block;
+  width: 30px;
+  height: 30px;
+  background-image: var(--emoji-icon-url);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
 }
 
 .submit-button {

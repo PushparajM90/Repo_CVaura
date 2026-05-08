@@ -1,9 +1,7 @@
 To Do's
--> Need to import the swall message for content copy alert.
 -> Change the download resume text to Icon + resume.
 -> AMCharts bottom onhover issue.
 -> Need to fix the responsiveness of the website for mobile and tablet devices.
--> Need to fix the current page content button highlight issue.
 -> need to change the email address to pushparaj.fullstack.dev@gmail.com (email js)
 
 -> Update the home page content.

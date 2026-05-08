@@ -317,27 +317,27 @@ const DEFAULT_LABELS = {
 const DEFAULT_EMOJI_PRESETS = [
   {
     id: "thumbs_up",
-    symbol: "??",
+    iconify_class: "i-noto-v1:thumbs-up",
     text: "Your portfolio looks impressive and professional.",
   },
   {
     id: "heart",
-    symbol: "??",
+    iconify_class: "i-noto-v1:red-heart",
     text: "Loved the visual style and the way the projects are presented.",
   },
   {
     id: "squint_tears",
-    symbol: "??",
+    iconify_class: "i-glyphs-poly:grin-squint-tears",
     text: "Clean work. I would be happy to discuss relevant opportunities.",
   },
   {
     id: "face_angry",
-    symbol: "??",
+    iconify_class: "i-glyphs-poly:angry",
     text: "A few details felt unclear. Could you share more context about the projects?",
   },
   {
     id: "thumbs_down",
-    symbol: "??",
+    iconify_class: "i-noto-v1:thumbs-down",
     text: "Please refresh the presentation and project details for stronger impact.",
   },
 ];
@@ -418,19 +418,44 @@ function normalizeContacts(data) {
   return { contacts, labels };
 }
 
+function isValidIconifyClass(iconClass) {
+  return /^i-[a-z0-9-]+:[a-z0-9][a-z0-9-]*$/i.test(iconClass.trim());
+}
+
+function getIconifyUrl(iconClass) {
+  if (!isValidIconifyClass(iconClass)) {
+    return "";
+  }
+
+  const [collection, iconName] = iconClass.trim().slice(2).split(":");
+
+  return `https://api.iconify.design/${collection}/${iconName}.svg`;
+}
+
 function normalizeEmojiPresets(data) {
-  console.log("Raw emoji data:", data);
   if (!data.id?.length) {
     return DEFAULT_EMOJI_PRESETS;
   }
 
-  return data.id.map((id, index) => ({
-    id,
-    symbol:
-      DEFAULT_EMOJI_PRESETS.find((item) => item.id === id)?.iconify_class ??
-      "??",
-    text: data.text?.[index] ?? "",
-  }));
+  const presets = data.id
+    .map((rawId, index) => {
+      const id = String(rawId || `emoji_${index + 1}`).trim();
+      const text = String(data.text?.[index] || "").trim();
+      const iconifyClass = String(data.iconify_class?.[index] || "").trim();
+
+      if (!text || !isValidIconifyClass(iconifyClass)) {
+        return null;
+      }
+
+      return {
+        id,
+        text,
+        iconify_class: iconifyClass,
+      };
+    })
+    .filter(Boolean);
+
+  return presets.length ? presets : DEFAULT_EMOJI_PRESETS;
 }
 
 function usePortfolioData() {
@@ -657,10 +682,12 @@ function useScrollSpy() {
   return { activeSection, scrollProgress, setActiveSection };
 }
 
-function showCopyNotification({ theme, label, status }) {
+function showCopyNotification({ label, status }) {
   const isSuccess = status === "success";
 
   Swal.fire({
+    toast: true,
+    position: "top-end",
     title: isSuccess ? "Copied" : "Copy unavailable",
     text: isSuccess
       ? `${label} has been copied to your clipboard.`
@@ -674,14 +701,42 @@ function showCopyNotification({ theme, label, status }) {
     showCloseButton: true,
     showConfirmButton: false,
     customClass: {
-      popup: "styled-popup themed-copy-popup",
+      popup: "styled-popup themed-copy-popup themed-mail-popup",
       title: "themed-copy-popup-title",
       htmlContainer: "themed-copy-popup-text",
       closeButton: "themed-copy-popup-close",
       timerProgressBar: "themed-copy-popup-progress",
     },
-    backdrop:
-      theme === "dark" ? "rgba(2, 10, 16, 0.62)" : "rgba(13, 27, 42, 0.22)",
+    backdrop: false,
+  });
+}
+
+function showMailNotification({ status }) {
+  const isSuccess = status === "success";
+
+  Swal.fire({
+    toast: true,
+    position: "top-end",
+    title: isSuccess ? "Message sent" : "Message not sent",
+    text: isSuccess
+      ? "Your message was sent successfully."
+      : "Please try again or use the direct contact links.",
+    icon: isSuccess ? "success" : "error",
+    color: "var(--text-main)",
+    background: "var(--surface)",
+    iconColor: isSuccess ? "var(--accent)" : "var(--highlight)",
+    timer: 5000,
+    timerProgressBar: true,
+    showCloseButton: true,
+    showConfirmButton: false,
+    customClass: {
+      popup: "styled-popup themed-copy-popup themed-mail-popup",
+      title: "themed-copy-popup-title",
+      htmlContainer: "themed-copy-popup-text",
+      closeButton: "themed-copy-popup-close",
+      timerProgressBar: "themed-copy-popup-progress",
+    },
+    backdrop: false,
   });
 }
 
@@ -956,6 +1011,22 @@ function App() {
     });
   }, []);
 
+  useEffect(() => {
+    if (mailState.status !== "success") {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setMailState((current) =>
+        current.status === "success"
+          ? { status: "idle", message: "" }
+          : current,
+      );
+    }, 5000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [mailState.status]);
+
   const contactCards = useMemo(
     () =>
       Object.keys(CONTACT_META).map((id) => ({
@@ -1040,6 +1111,7 @@ function App() {
         status: "success",
         message: "Message sent successfully. Thank you for reaching out.",
       });
+      showMailNotification({ status: "success" });
     } catch (error) {
       console.error("EmailJS send failed", error);
       setMailState({
@@ -1047,6 +1119,7 @@ function App() {
         message:
           "The message could not be sent right now. Please use the direct contact links below.",
       });
+      showMailNotification({ status: "error" });
     }
   };
 
@@ -1352,8 +1425,17 @@ function App() {
                     type="button"
                     className="emoji-preset"
                     onClick={() => handlePresetClick(preset.text)}
+                    aria-label={`Use ${preset.id.replaceAll("_", " ")} preset message`}
                   >
-                    <span>{preset.symbol}</span>
+                    <div
+                      className={`${preset.iconify_class} emoji-icon`}
+                      style={{
+                        "--emoji-icon-url": `url("${getIconifyUrl(
+                          preset.iconify_class,
+                        )}")`,
+                      }}
+                      aria-hidden="true"
+                    />
                   </button>
                 ))}
               </div>
