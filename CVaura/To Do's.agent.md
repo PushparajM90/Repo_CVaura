@@ -1,8 +1,7 @@
 To Do's
--> Change the download resume text to Icon + resume.
 -> AMCharts bottom onhover issue.
--> Need to fix the responsiveness of the website for mobile and tablet devices.
 -> need to change the email address to pushparaj.fullstack.dev@gmail.com (email js)
+-> When I onhover a skills image ("logo-card glass-card"), the image should have an animation like mirror shining effect from top-left to bottom-right.
 
 -> Update the home page content.
 -> Update Professional summary content
@@ -12,3 +11,4 @@ To Do's
 -> Update the title for Education and onhower animations
 -> Add Icons accros all the page.
 -> check all titles accross all the pages.
+-> Need to fix the responsiveness of the website for mobile and tablet devices.

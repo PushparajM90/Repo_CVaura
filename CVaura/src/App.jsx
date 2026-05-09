@@ -20,6 +20,7 @@ const SHEET_ID = "1ZnIgvXhhld9W1F6TgqpRCLt1mULRRxlPb5hntLYxJzU";
 const EMAILJS_PUBLIC_KEY = "NagH5tRuSAjvWj56m";
 const EMAILJS_SERVICE_ID = "service_0ek3p4d";
 const EMAILJS_TEMPLATE_ID = "template_ikmroyv";
+const RESUME_DOWNLOAD_FILENAME = "Pushparaj_Murugesan_Resume.pdf";
 
 const NAV_ITEMS = [
   { id: "home", label: "Home" },
@@ -255,7 +256,7 @@ const EDUCATION = [
 ];
 
 const DEFAULT_PROFILE =
-  "Full-stack developer with experience building business tools, data workflows, APIs, and responsive interfaces. I focus on turning operational needs into practical products that are clear, reliable, and easy to use.";
+  "Full-stack engineer with experience building business tools, data workflows, APIs, and responsive interfaces. I focus on turning operational needs into practical products that are clear, reliable, and easy to use.";
 
 const DEFAULT_CONTACTS = {
   email_icon: "",
@@ -403,7 +404,29 @@ function resolveContactHref(id, value) {
   return `https://${value}`;
 }
 
+function resolveGoogleDocsPdfUrl(url) {
+  const trimmedUrl = String(url || "").trim();
+
+  if (!trimmedUrl) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(trimmedUrl);
+    const documentId = parsedUrl.pathname.match(/\/document\/d\/([^/]+)/)?.[1];
+
+    if (parsedUrl.hostname === "docs.google.com" && documentId) {
+      return `https://docs.google.com/document/d/${documentId}/export?format=pdf`;
+    }
+  } catch {
+    return trimmedUrl;
+  }
+
+  return trimmedUrl;
+}
+
 function normalizeContacts(data) {
+  console.log("data--->", data);
   const titles = data.title ?? [];
   const values = data.data ?? [];
   const subTitles = data.sub_title ?? [];
@@ -411,11 +434,21 @@ function normalizeContacts(data) {
   const labels = { ...DEFAULT_LABELS };
 
   titles.forEach((id, index) => {
+    if (id == "Round_Experiance") {
+      var round_experiance = values[index] ?? "3+";
+      console.log("\n round_experiance--->", round_experiance);
+    }
     contacts[id] = values[index] ?? "";
     labels[id] = subTitles[index] || labels[id] || "Contact";
   });
 
   return { contacts, labels };
+}
+
+function getPersonalDetailValue(data, key) {
+  const valueIndex = data.title?.indexOf(key) ?? -1;
+
+  return valueIndex >= 0 ? (data.data?.[valueIndex] ?? "") : "";
 }
 
 function isValidIconifyClass(iconClass) {
@@ -458,22 +491,54 @@ function normalizeEmojiPresets(data) {
   return presets.length ? presets : DEFAULT_EMOJI_PRESETS;
 }
 
+function normalizeKeyHighlights(data) {
+  const resolveColumn = (expectedName) => {
+    const matchingColumn = Object.keys(data).find(
+      (columnName) =>
+        columnName.trim().toLowerCase() === expectedName.trim().toLowerCase(),
+    );
+
+    return matchingColumn ? (data[matchingColumn] ?? []) : [];
+  };
+
+  const keys = resolveColumn("Highlight_key");
+  const details = resolveColumn("Detail");
+
+  return keys
+    .map((highlightKey, index) => ({
+      highlight_key: String(highlightKey ?? "").trim(),
+      detail: String(details[index] ?? "").trim(),
+    }))
+    .filter((item) => item.highlight_key && item.detail);
+}
+
+async function fetchKeyHighlights() {
+  const keyHighlightsData = await fetchSheetColumns("Key_highlights");
+  return normalizeKeyHighlights(keyHighlightsData);
+}
+
 function usePortfolioData() {
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [contacts, setContacts] = useState(DEFAULT_CONTACTS);
   const [labels, setLabels] = useState(DEFAULT_LABELS);
   const [emojiPresets, setEmojiPresets] = useState(DEFAULT_EMOJI_PRESETS);
+  const [resumeLink, setResumeLink] = useState("");
+  const [keyHighlights, setKeyHighlights] = useState([]);
+  const [isKeyHighlightsLoading, setIsKeyHighlightsLoading] = useState(true);
+  const [keyHighlightsError, setKeyHighlightsError] = useState("");
 
   useEffect(() => {
     let ignore = false;
 
     async function loadData() {
       try {
-        const [profileData, emojiData, contactData] = await Promise.all([
-          fetchSheetColumns("profile"),
-          fetchSheetColumns("emoji"),
-          fetchSheetColumns("personal_details"),
-        ]);
+        const [profileData, emojiData, contactData, keyHighlightsData] =
+          await Promise.all([
+            fetchSheetColumns("profile"),
+            fetchSheetColumns("emoji"),
+            fetchSheetColumns("personal_details"),
+            fetchKeyHighlights(),
+          ]);
 
         if (ignore) {
           return;
@@ -486,9 +551,23 @@ function usePortfolioData() {
           const normalized = normalizeContacts(contactData);
           setContacts(normalized.contacts);
           setLabels(normalized.labels);
+          setResumeLink(getPersonalDetailValue(contactData, "resume_link"));
+          setKeyHighlights(keyHighlightsData);
+          setKeyHighlightsError("");
+          setIsKeyHighlightsLoading(false);
         });
       } catch (error) {
         console.error("Unable to load Google Sheet data", error);
+
+        if (ignore) {
+          return;
+        }
+
+        startTransition(() => {
+          setKeyHighlights([]);
+          setKeyHighlightsError("Unable to load highlights right now.");
+          setIsKeyHighlightsLoading(false);
+        });
       }
     }
 
@@ -499,7 +578,16 @@ function usePortfolioData() {
     };
   }, []);
 
-  return { profile, contacts, labels, emojiPresets };
+  return {
+    profile,
+    contacts,
+    labels,
+    emojiPresets,
+    resumeLink,
+    keyHighlights,
+    isKeyHighlightsLoading,
+    keyHighlightsError,
+  };
 }
 
 function resolveInitialTheme() {
@@ -711,16 +799,18 @@ function showCopyNotification({ label, status }) {
   });
 }
 
-function showMailNotification({ status }) {
+function showMailNotification({ status, title, message }) {
   const isSuccess = status === "success";
 
   Swal.fire({
     toast: true,
     position: "top-end",
-    title: isSuccess ? "Message sent" : "Message not sent",
-    text: isSuccess
-      ? "Your message was sent successfully."
-      : "Please try again or use the direct contact links.",
+    title: title || (isSuccess ? "Message sent" : "Message not sent"),
+    text:
+      message ||
+      (isSuccess
+        ? "Your message was sent successfully."
+        : "Please try again or use the direct contact links."),
     icon: isSuccess ? "success" : "error",
     color: "var(--text-main)",
     background: "var(--surface)",
@@ -990,7 +1080,16 @@ function EducationChart({ data, theme, title }) {
 
 function App() {
   const [theme, setTheme] = useTheme();
-  const { profile, contacts, labels, emojiPresets } = usePortfolioData();
+  const {
+    profile,
+    contacts,
+    labels,
+    emojiPresets,
+    resumeLink,
+    keyHighlights,
+    isKeyHighlightsLoading,
+    keyHighlightsError,
+  } = usePortfolioData();
   const [form, setForm] = useState({
     recipient_from_name: "",
     recipient_from_email: "",
@@ -1039,20 +1138,69 @@ function App() {
     [contacts, labels],
   );
 
-  const featuredMetrics = [
-    { value: "2+", label: "Years building business tools and interfaces" },
-    {
-      value: "6",
-      label: "Portfolio highlights carried over from the source app",
-    },
-    { value: "3", label: "Academic performance visuals rebuilt with AMCharts" },
-  ];
-
   const handleNavClick = (id) => {
     setActiveSection(id);
     document
       .getElementById(id)
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleResumeDownload = async (event) => {
+    event.preventDefault();
+
+    const resumePdfUrl = resolveGoogleDocsPdfUrl(resumeLink);
+
+    if (!resumePdfUrl) {
+      showMailNotification({
+        status: "error",
+        title: "Resume not available",
+        message: "Resume link is not available right now.",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(resumePdfUrl, {
+        mode: "cors",
+        credentials: "omit",
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Resume download failed with status ${response.status}`,
+        );
+      }
+
+      const resumeBlob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(resumeBlob);
+      const downloadLink = document.createElement("a");
+
+      downloadLink.href = downloadUrl;
+      downloadLink.download = RESUME_DOWNLOAD_FILENAME;
+      downloadLink.rel = "noopener noreferrer";
+      downloadLink.style.display = "none";
+
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+      window.setTimeout(() => {
+        window.URL.revokeObjectURL(downloadUrl);
+      }, 1000);
+
+      showMailNotification({
+        status: "success",
+        title: "Resume downloaded",
+        message: `${RESUME_DOWNLOAD_FILENAME} has been downloaded successfully.`,
+      });
+    } catch (error) {
+      console.error("Resume download failed", error);
+      showMailNotification({
+        status: "error",
+        title: "Download failed",
+        message: "Could not download resume. Opening in new tab instead.",
+      });
+      window.open(resumePdfUrl, "_blank", "noopener,noreferrer");
+    }
   };
 
   const handleInputChange = (event) => {
@@ -1187,44 +1335,70 @@ function App() {
       <main>
         <section id="home" className="hero-section section-block">
           <div className="hero-copy">
-            <p className="eyebrow">Full-stack developer</p>
+            <p className="eyebrow">FULL-STACK ENGINEER</p>
             <h1>
-              Modern engineering, calm execution, and recruiter-ready clarity.
+              Building scalable business tools and modern web applications with
+              clean architecture and real-world impact.
             </h1>
             <p className="hero-text">
-              CVaura reframes the original portfolio into a sharper React
-              experience while preserving the source features: EmailJS contact
-              flow, Google Sheets content sync, AMCharts education visuals, and
-              the original asset library.
+              I build scalable web applications, automation tools, and
+              data-driven platforms focused on performance, usability, and
+              operational efficiency.
             </p>
             <div className="hero-actions">
               <a
                 className="primary-button"
-                href="/legacy-assets/images/Pushparaj_Murugesan.pdf"
-                target="_blank"
-                rel="noreferrer"
+                href={resolveGoogleDocsPdfUrl(resumeLink) || "#home"}
+                onClick={handleResumeDownload}
+                aria-label="Download resume as a PDF"
               >
                 <div
                   className="resume-download-icon i-line-md:downloading-loop  w-48px h-48px"
                   aria-hidden="true"
                 />
-                <span>Resume</span>
+                <span>Download Resume</span>
               </a>
               <button
                 type="button"
                 className="secondary-button"
                 onClick={() => handleNavClick("contact")}
               >
-                Contact Me
+                Let's Connect
               </button>
             </div>
             <div className="metrics-grid">
-              {featuredMetrics.map((item) => (
-                <article key={item.label} className="metric-card">
-                  <strong>{item.value}</strong>
-                  <span>{item.label}</span>
+              {isKeyHighlightsLoading ? (
+                <article
+                  className="metric-card metric-card-message"
+                  role="status"
+                >
+                  <span>Loading highlights...</span>
                 </article>
-              ))}
+              ) : keyHighlightsError ? (
+                <article
+                  className="metric-card metric-card-message"
+                  role="status"
+                >
+                  <span>{keyHighlightsError}</span>
+                </article>
+              ) : keyHighlights.length ? (
+                keyHighlights.map((item) => (
+                  <article
+                    key={`${item.highlight_key}-${item.detail}`}
+                    className="metric-card"
+                  >
+                    <strong>{item.highlight_key}</strong>
+                    <span>{item.detail}</span>
+                  </article>
+                ))
+              ) : (
+                <article
+                  className="metric-card metric-card-message"
+                  role="status"
+                >
+                  <span>No highlights found.</span>
+                </article>
+              )}
             </div>
           </div>
 
@@ -1238,7 +1412,7 @@ function App() {
               />
             </div>
             <div className="status-card">
-              <p>Now running on React + Vite</p>
+              <p className="home-card-name">Pushparaj Murugesan</p>
               <strong>
                 Dark mode, charts, sheet data, and portfolio assets fully
                 migrated.
