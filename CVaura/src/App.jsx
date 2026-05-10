@@ -32,7 +32,7 @@ const NAV_ITEMS = [
   { id: "contact", label: "Contact" },
 ];
 
-const EXPERIENCE = [
+const DEFAULT_EXPERIENCE = [
   {
     period: "July 2023 - Present",
     title: "Full-Stack Developer",
@@ -58,14 +58,40 @@ const EXPERIENCE = [
   },
 ];
 
-const PROJECTS = [
-  "Built and maintain a tool to calculate employee performance using trackers and factor-based scoring.",
-  "Designed a secure data migration tool to move information from a public server to a local server.",
-  "Created a questionnaire generation platform and API flow to deliver survey questions to mobile apps.",
-  "Developed a manpower monitoring tool that tracks footage status and estimates staffing needs.",
-  "Migrated legacy visualizations to AMCharts to make business data easier to read and act on.",
-  "Implemented a manpower and cost calculator to support delivery planning and forecasting.",
-];
+const DEFAULT_PROJECTS = {
+  main: [
+    {
+      project:
+        "Built and maintain a tool to calculate employee performance using trackers and factor-based scoring.",
+      description: [],
+    },
+    {
+      project:
+        "Designed a secure data migration tool to move information from a public server to a local server.",
+      description: [],
+    },
+    {
+      project:
+        "Created a questionnaire generation platform and API flow to deliver survey questions to mobile apps.",
+      description: [],
+    },
+    {
+      project:
+        "Developed a manpower monitoring tool that tracks footage status and estimates staffing needs.",
+      description: [],
+    },
+    {
+      project:
+        "Migrated legacy visualizations to AMCharts to make business data easier to read and act on.",
+      description: [],
+    },
+    {
+      project:
+        "Implemented a manpower and cost calculator to support delivery planning and forecasting.",
+      description: [],
+    },
+  ],
+};
 
 const SKILL_GROUPS = [
   {
@@ -258,6 +284,15 @@ const EDUCATION = [
 const DEFAULT_PROFILE =
   "Full-stack engineer with experience building business tools, data workflows, APIs, and responsive interfaces. I focus on turning operational needs into practical products that are clear, reliable, and easy to use.";
 
+const DEFAULT_PROFILE_CONTENT = {
+  lhs: [DEFAULT_PROFILE],
+  rhs: [
+    "Full-stack delivery across APIs, dashboards, forms, and internal tools.",
+    "Experience translating business workflows into practical products.",
+    "Comfort with data visualization, migration work, and responsive UI design.",
+  ],
+};
+
 const DEFAULT_CONTACTS = {
   email_icon: "",
   linkedin_icon: "",
@@ -426,7 +461,6 @@ function resolveGoogleDocsPdfUrl(url) {
 }
 
 function normalizeContacts(data) {
-  console.log("data--->", data);
   const titles = data.title ?? [];
   const values = data.data ?? [];
   const subTitles = data.sub_title ?? [];
@@ -434,10 +468,6 @@ function normalizeContacts(data) {
   const labels = { ...DEFAULT_LABELS };
 
   titles.forEach((id, index) => {
-    if (id == "Round_Experiance") {
-      var round_experiance = values[index] ?? "3+";
-      console.log("\n round_experiance--->", round_experiance);
-    }
     contacts[id] = values[index] ?? "";
     labels[id] = subTitles[index] || labels[id] || "Contact";
   });
@@ -491,6 +521,170 @@ function normalizeEmojiPresets(data) {
   return presets.length ? presets : DEFAULT_EMOJI_PRESETS;
 }
 
+function normalizeProfileContent(data) {
+  const resolveColumn = (expectedName) => {
+    const matchingColumn = Object.keys(data).find(
+      (columnName) =>
+        columnName.trim().toLowerCase() === expectedName.trim().toLowerCase(),
+    );
+
+    return matchingColumn ? (data[matchingColumn] ?? []) : [];
+  };
+
+  const lhs = resolveColumn("lhs_profile_content")
+    .map((item) => String(item ?? "").trim())
+    .filter(Boolean);
+  const rhs = resolveColumn("rhs_profile_content")
+    .map((item) => String(item ?? "").trim())
+    .filter(Boolean);
+
+  return {
+    lhs: lhs.length ? lhs : DEFAULT_PROFILE_CONTENT.lhs,
+    rhs: rhs.length ? rhs : DEFAULT_PROFILE_CONTENT.rhs,
+  };
+}
+
+function normalizeExperience(data) {
+  const resolveColumn = (expectedName) => {
+    const matchingColumn = Object.keys(data).find(
+      (columnName) =>
+        columnName.trim().toLowerCase() === expectedName.trim().toLowerCase(),
+    );
+
+    return matchingColumn ? (data[matchingColumn] ?? []) : [];
+  };
+
+  const periodColumn = resolveColumn("period");
+  const roleColumn = resolveColumn("role");
+  const titleColumn = resolveColumn("title");
+  const companyColumn = resolveColumn("company");
+  const locationColumn = resolveColumn("location");
+  const descriptionColumn = resolveColumn("description");
+
+  const rowCount = Math.max(
+    periodColumn.length,
+    roleColumn.length,
+    titleColumn.length,
+    companyColumn.length,
+    locationColumn.length,
+    descriptionColumn.length,
+  );
+
+  const experiences = [];
+  let currentExperience = null;
+
+  for (let index = 0; index < rowCount; index += 1) {
+    const period = String(periodColumn[index] ?? "").trim();
+    const role = String(roleColumn[index] ?? "").trim();
+    const title = role || String(titleColumn[index] ?? "").trim();
+    const company = String(companyColumn[index] ?? "").trim();
+    const location = String(locationColumn[index] ?? "").trim();
+    const description = String(descriptionColumn[index] ?? "").trim();
+
+    if (!period && !title && !company && !location && !description) {
+      continue;
+    }
+
+    if (period) {
+      if (currentExperience) {
+        experiences.push(currentExperience);
+      }
+
+      currentExperience = {
+        period,
+        title,
+        company,
+        location,
+        points: [],
+      };
+    }
+
+    if (!currentExperience) {
+      continue;
+    }
+
+    if (description) {
+      currentExperience.points.push(description);
+    }
+  }
+
+  if (currentExperience) {
+    experiences.push(currentExperience);
+  }
+
+  return experiences;
+}
+
+function normalizeProjects(data) {
+  const resolveColumn = (expectedName) => {
+    const matchingColumn = Object.keys(data).find(
+      (columnName) =>
+        columnName.trim().toLowerCase() === expectedName.trim().toLowerCase(),
+    );
+
+    return matchingColumn ? (data[matchingColumn] ?? []) : [];
+  };
+
+  const typeColumn = resolveColumn("project_type");
+  const projectColumn = resolveColumn("project");
+  const descriptionColumn = resolveColumn("description");
+
+  const rowCount = Math.max(
+    typeColumn.length,
+    projectColumn.length,
+    descriptionColumn.length,
+  );
+
+  const groups = {};
+  let currentType = null;
+  let currentProject = null;
+
+  for (let i = 0; i < rowCount; i += 1) {
+    const rawType = String(typeColumn[i] ?? "").trim();
+    const rawProject = String(projectColumn[i] ?? "").trim();
+    const rawDescription = String(descriptionColumn[i] ?? "").trim();
+
+    // ignore fully empty rows
+    if (!rawType && !rawProject && !rawDescription) {
+      continue;
+    }
+
+    if (rawType) {
+      currentType = rawType;
+    }
+
+    // start a new project block when project or project_type is present
+    if (rawProject) {
+      const typeKey = currentType || rawType || "main";
+
+      if (!groups[typeKey]) {
+        groups[typeKey] = [];
+      }
+
+      currentProject = { project: rawProject, description: [] };
+      groups[typeKey].push(currentProject);
+    }
+
+    // if project_type is present but project isn't (rare), ensure we have currentType
+    if (rawType && !rawProject) {
+      if (!currentType) currentType = rawType;
+      if (!groups[currentType]) groups[currentType] = [];
+    }
+
+    // append description rows to current project
+    if (rawDescription && currentProject) {
+      currentProject.description.push(rawDescription);
+    }
+  }
+
+  return Object.keys(groups).length ? groups : DEFAULT_PROJECTS;
+}
+
+async function fetchProjects() {
+  const projectsData = await fetchSheetColumns("projects");
+  return normalizeProjects(projectsData);
+}
+
 function normalizeKeyHighlights(data) {
   const resolveColumn = (expectedName) => {
     const matchingColumn = Object.keys(data).find(
@@ -517,12 +711,23 @@ async function fetchKeyHighlights() {
   return normalizeKeyHighlights(keyHighlightsData);
 }
 
+async function fetchExperience() {
+  const experienceData = await fetchSheetColumns("Experience");
+  return normalizeExperience(experienceData);
+}
+
 function usePortfolioData() {
-  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+  const [profileContent, setProfileContent] = useState(DEFAULT_PROFILE_CONTENT);
   const [contacts, setContacts] = useState(DEFAULT_CONTACTS);
   const [labels, setLabels] = useState(DEFAULT_LABELS);
   const [emojiPresets, setEmojiPresets] = useState(DEFAULT_EMOJI_PRESETS);
   const [resumeLink, setResumeLink] = useState("");
+  const [experience, setExperience] = useState(DEFAULT_EXPERIENCE);
+  const [isExperienceLoading, setIsExperienceLoading] = useState(true);
+  const [experienceError, setExperienceError] = useState("");
+  const [projectsData, setProjectsData] = useState(DEFAULT_PROJECTS);
+  const [isProjectsLoading, setIsProjectsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState("");
   const [keyHighlights, setKeyHighlights] = useState([]);
   const [isKeyHighlightsLoading, setIsKeyHighlightsLoading] = useState(true);
   const [keyHighlightsError, setKeyHighlightsError] = useState("");
@@ -532,20 +737,28 @@ function usePortfolioData() {
 
     async function loadData() {
       try {
-        const [profileData, emojiData, contactData, keyHighlightsData] =
-          await Promise.all([
-            fetchSheetColumns("profile"),
-            fetchSheetColumns("emoji"),
-            fetchSheetColumns("personal_details"),
-            fetchKeyHighlights(),
-          ]);
+        const [
+          profileData,
+          emojiData,
+          contactData,
+          keyHighlightsData,
+          experienceData,
+          projectsApiData,
+        ] = await Promise.all([
+          fetchSheetColumns("profile"),
+          fetchSheetColumns("emoji"),
+          fetchSheetColumns("personal_details"),
+          fetchKeyHighlights(),
+          fetchExperience(),
+          fetchProjects(),
+        ]);
 
         if (ignore) {
           return;
         }
 
         startTransition(() => {
-          setProfile(profileData.profile_content?.[0] || DEFAULT_PROFILE);
+          setProfileContent(normalizeProfileContent(profileData));
           setEmojiPresets(normalizeEmojiPresets(emojiData));
 
           const normalized = normalizeContacts(contactData);
@@ -553,6 +766,12 @@ function usePortfolioData() {
           setLabels(normalized.labels);
           setResumeLink(getPersonalDetailValue(contactData, "resume_link"));
           setKeyHighlights(keyHighlightsData);
+          setExperience(experienceData);
+          setProjectsData(projectsApiData);
+          setExperienceError("");
+          setIsExperienceLoading(false);
+          setProjectsError("");
+          setIsProjectsLoading(false);
           setKeyHighlightsError("");
           setIsKeyHighlightsLoading(false);
         });
@@ -564,6 +783,12 @@ function usePortfolioData() {
         }
 
         startTransition(() => {
+          setExperience(DEFAULT_EXPERIENCE);
+          setExperienceError("Unable to load experience right now.");
+          setIsExperienceLoading(false);
+          setProjectsData(DEFAULT_PROJECTS);
+          setProjectsError("Unable to load projects right now.");
+          setIsProjectsLoading(false);
           setKeyHighlights([]);
           setKeyHighlightsError("Unable to load highlights right now.");
           setIsKeyHighlightsLoading(false);
@@ -579,11 +804,17 @@ function usePortfolioData() {
   }, []);
 
   return {
-    profile,
+    profileContent,
     contacts,
     labels,
     emojiPresets,
     resumeLink,
+    experience,
+    isExperienceLoading,
+    experienceError,
+    projectsData,
+    isProjectsLoading,
+    projectsError,
     keyHighlights,
     isKeyHighlightsLoading,
     keyHighlightsError,
@@ -1081,15 +1312,33 @@ function EducationChart({ data, theme, title }) {
 function App() {
   const [theme, setTheme] = useTheme();
   const {
-    profile,
+    profileContent,
     contacts,
     labels,
     emojiPresets,
     resumeLink,
+    experience,
+    isExperienceLoading,
+    experienceError,
+    projectsData,
+    isProjectsLoading,
+    projectsError,
     keyHighlights,
     isKeyHighlightsLoading,
     keyHighlightsError,
   } = usePortfolioData();
+  const [projectsModalOpen, setProjectsModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
+
+  const openProjectModal = (project) => {
+    setSelectedProject(project);
+    setProjectsModalOpen(true);
+  };
+
+  const closeProjectModal = () => {
+    setProjectsModalOpen(false);
+    setSelectedProject(null);
+  };
   const [form, setForm] = useState({
     recipient_from_name: "",
     recipient_from_email: "",
@@ -1414,8 +1663,8 @@ function App() {
             <div className="status-card">
               <p className="home-card-name">Pushparaj Murugesan</p>
               <strong>
-                Dark mode, charts, sheet data, and portfolio assets fully
-                migrated.
+                Full-stack engineer focused on scalable architecture,
+                performance, and product impact.
               </strong>
             </div>
           </div>
@@ -1428,23 +1677,16 @@ function App() {
           </div>
           <div className="profile-grid">
             <article className="glass-card narrative-card">
-              <p>{profile}</p>
+              {profileContent.lhs.map((paragraph, index) => (
+                <p key={`${paragraph}-${index}`}>{paragraph}</p>
+              ))}
             </article>
             <article className="glass-card profile-highlights">
-              <h3>What recruiters can expect</h3>
+              <h3>Key Highlights</h3>
               <ul>
-                <li>
-                  Full-stack delivery across APIs, dashboards, forms, and
-                  internal tools.
-                </li>
-                <li>
-                  Experience translating business workflows into practical
-                  products.
-                </li>
-                <li>
-                  Comfort with data visualization, migration work, and
-                  responsive UI design.
-                </li>
+                {profileContent.rhs.map((item, index) => (
+                  <li key={`${item}-${index}`}>{item}</li>
+                ))}
               </ul>
             </article>
           </div>
@@ -1455,41 +1697,112 @@ function App() {
             <p className="eyebrow">Experience</p>
             <h2>Hands-on product and platform work</h2>
           </div>
+          {isExperienceLoading ? (
+            <article className="glass-card metric-card-message" role="status">
+              <span>Loading experience...</span>
+            </article>
+          ) : experienceError ? (
+            <article className="glass-card metric-card-message" role="status">
+              <span>{experienceError}</span>
+            </article>
+          ) : null}
           <div className="timeline">
-            {EXPERIENCE.map((item) => (
-              <article
-                key={`${item.company}-${item.period}`}
-                className="timeline-card glass-card"
-              >
-                <div className="timeline-meta">
-                  <span>{item.period}</span>
-                  <span>{item.location}</span>
-                </div>
-                <h3>{item.title}</h3>
-                <p className="timeline-company">{item.company}</p>
-                <ul>
-                  {item.points.map((point) => (
-                    <li key={point}>{point}</li>
-                  ))}
-                </ul>
+            {experience.length ? (
+              experience.map((item, index) => (
+                <article
+                  key={`${item.company}-${item.period}-${item.title}-${index}`}
+                  className="timeline-card glass-card"
+                >
+                  <div className="timeline-meta">
+                    <span>{item.period}</span>
+                    <span>{item.location}</span>
+                  </div>
+                  <h3>{item.title}</h3>
+                  <p className="timeline-company">{item.company}</p>
+                  <ul>
+                    {item.points.map((point, pointIndex) => (
+                      <li key={`${point}-${pointIndex}`}>{point}</li>
+                    ))}
+                  </ul>
+                </article>
+              ))
+            ) : (
+              <article className="glass-card metric-card-message" role="status">
+                <span>No experience records found.</span>
               </article>
-            ))}
+            )}
           </div>
         </section>
 
         <section id="projects" className="section-block">
           <div className="section-heading">
             <p className="eyebrow">Projects</p>
-            <h2>Source portfolio work, presented with more focus</h2>
+            <h2>Projects Built for Real-World Impact</h2>
           </div>
+          {isProjectsLoading ? (
+            <article className="glass-card metric-card-message" role="status">
+              <span>Loading projects...</span>
+            </article>
+          ) : projectsError ? (
+            <article className="glass-card metric-card-message" role="status">
+              <span>{projectsError}</span>
+            </article>
+          ) : null}
+
           <div className="project-grid">
-            {PROJECTS.map((project, index) => (
-              <article key={project} className="project-card glass-card">
+            {(projectsData?.main ?? []).map((proj, index) => (
+              <article
+                key={`${proj.project}-${index}`}
+                className="project-card glass-card"
+              >
                 <span className="project-index">0{index + 1}</span>
-                <p>{project}</p>
+                <p>{proj.project}</p>
+                <div className="project-actions">
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => openProjectModal(proj)}
+                    style={{
+                      background: "var(--accent)",
+                      color: "var(--text-on-accent, var(--text-main))",
+                    }}
+                  >
+                    View Details
+                  </button>
+                </div>
               </article>
             ))}
           </div>
+
+          {projectsModalOpen && selectedProject ? (
+            <div className="modal-overlay" role="dialog" aria-modal="true">
+              <div className="glass-card project-modal">
+                <div className="modal-header">
+                  <h3>{selectedProject.project}</h3>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={closeProjectModal}
+                    aria-label="Close project details"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="modal-body">
+                  {selectedProject.description &&
+                  selectedProject.description.length ? (
+                    <ul>
+                      {selectedProject.description.map((d, i) => (
+                        <li key={`${d}-${i}`}>{d}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No additional details available.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section id="skills" className="section-block">
@@ -1536,7 +1849,7 @@ function App() {
         <section id="education" className="section-block">
           <div className="section-heading">
             <p className="eyebrow">Education</p>
-            <h2>AMCharts rebuilt inside React</h2>
+            <h2>Academic Journey</h2>
           </div>
           <div className="education-grid">
             {EDUCATION.map((item) => (
@@ -1562,8 +1875,16 @@ function App() {
         <section id="contact" className="section-block">
           <div className="section-heading">
             <p className="eyebrow">Contact</p>
-            <h2>EmailJS form and source-driven contact details</h2>
+            <h2>Let's Connect</h2>
           </div>
+          <p>
+            Interested in collaborating, building impactful products, or
+            discussing software engineering opportunities?
+          </p>
+          <p>
+            Feel free to reach out through email or connect with me on
+            professional platforms.
+          </p>
           <div className="contact-layout">
             <form className="glass-card contact-form" onSubmit={handleSubmit}>
               <label htmlFor="recipient_from_name">Name</label>
