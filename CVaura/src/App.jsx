@@ -58,40 +58,63 @@ const DEFAULT_EXPERIENCE = [
   },
 ];
 
-const DEFAULT_PROJECTS = {
-  main: [
-    {
-      project:
-        "Built and maintain a tool to calculate employee performance using trackers and factor-based scoring.",
-      description: [],
-    },
-    {
-      project:
-        "Designed a secure data migration tool to move information from a public server to a local server.",
-      description: [],
-    },
-    {
-      project:
-        "Created a questionnaire generation platform and API flow to deliver survey questions to mobile apps.",
-      description: [],
-    },
-    {
-      project:
-        "Developed a manpower monitoring tool that tracks footage status and estimates staffing needs.",
-      description: [],
-    },
-    {
-      project:
-        "Migrated legacy visualizations to AMCharts to make business data easier to read and act on.",
-      description: [],
-    },
-    {
-      project:
-        "Implemented a manpower and cost calculator to support delivery planning and forecasting.",
-      description: [],
-    },
-  ],
-};
+const DEFAULT_PROJECTS = [
+  {
+    project_type: "main",
+    project_title:
+      "Employee Performance Tracking and Operations Management System",
+    project_overview:
+      "Built and maintain a tool to calculate employee performance using trackers and factor-based scoring.",
+    key_contributions: [],
+    technical_highlights: [],
+    project_outcome: "Project details will be updated soon.",
+  },
+  {
+    project_type: "main",
+    project_title: "Secure Data Migration Tool",
+    project_overview:
+      "Designed a secure data migration tool to move information from a public server to a local server.",
+    key_contributions: [],
+    technical_highlights: [],
+    project_outcome: "Project details will be updated soon.",
+  },
+  {
+    project_type: "main",
+    project_title: "Questionnaire Generation Platform",
+    project_overview:
+      "Created a questionnaire generation platform and API flow to deliver survey questions to mobile apps.",
+    key_contributions: [],
+    technical_highlights: [],
+    project_outcome: "Project details will be updated soon.",
+  },
+  {
+    project_type: "main",
+    project_title: "Manpower Monitoring Tool",
+    project_overview:
+      "Developed a manpower monitoring tool that tracks footage status and estimates staffing needs.",
+    key_contributions: [],
+    technical_highlights: [],
+    project_outcome: "Project details will be updated soon.",
+  },
+  {
+    project_type: "main",
+    project_title: "AMCharts Visualization Migration",
+    project_overview:
+      "Migrated legacy visualizations to AMCharts to make business data easier to read and act on.",
+    key_contributions: [],
+    technical_highlights: [],
+    project_outcome: "Project details will be updated soon.",
+  },
+  {
+    project_type: "main",
+    project_title: "Manpower and Cost Calculator",
+    project_overview:
+      "Implemented a manpower and cost calculator to support delivery planning and forecasting.",
+    key_contributions: [],
+    technical_highlights: [],
+    project_outcome: "Project details will be updated soon.",
+  },
+];
 
 const DEFAULT_SKILL_GROUPS = [
   {
@@ -517,7 +540,7 @@ function normalizeEmojiPresets(data) {
       };
     })
     .filter(Boolean);
-
+  console.log("\n presets--->", presets);
   return presets.length ? presets : DEFAULT_EMOJI_PRESETS;
 }
 
@@ -626,58 +649,69 @@ function normalizeProjects(data) {
   };
 
   const typeColumn = resolveColumn("project_type");
-  const projectColumn = resolveColumn("project");
-  const descriptionColumn = resolveColumn("description");
+  const titleColumn = resolveColumn("Project Title");
+  const overviewColumn = resolveColumn("Project Overview");
+  const contributionsColumn = resolveColumn("Key Contributions");
+  const highlightsColumn = resolveColumn("Technical Highlights");
+  const outcomeColumn = resolveColumn("Project Outcome");
 
   const rowCount = Math.max(
     typeColumn.length,
-    projectColumn.length,
-    descriptionColumn.length,
+    titleColumn.length,
+    overviewColumn.length,
+    contributionsColumn.length,
+    highlightsColumn.length,
+    outcomeColumn.length,
   );
 
-  const groups = {};
-  let currentType = null;
+  const projects = [];
   let currentProject = null;
 
   for (let i = 0; i < rowCount; i += 1) {
-    const rawType = String(typeColumn[i] ?? "").trim();
-    const rawProject = String(projectColumn[i] ?? "").trim();
-    const rawDescription = String(descriptionColumn[i] ?? "").trim();
+    const projectType = String(typeColumn[i] ?? "").trim();
+    const projectTitle = String(titleColumn[i] ?? "").trim();
+    const projectOverview = String(overviewColumn[i] ?? "").trim();
+    const keyContribution = String(contributionsColumn[i] ?? "").trim();
+    const technicalHighlight = String(highlightsColumn[i] ?? "").trim();
+    const projectOutcome = String(outcomeColumn[i] ?? "").trim();
 
-    // ignore fully empty rows
-    if (!rawType && !rawProject && !rawDescription) {
+    if (
+      !projectType &&
+      !projectTitle &&
+      !projectOverview &&
+      !keyContribution &&
+      !technicalHighlight &&
+      !projectOutcome
+    ) {
       continue;
     }
 
-    if (rawType) {
-      currentType = rawType;
+    if (projectTitle) {
+      currentProject = {
+        project_type: projectType,
+        project_title: projectTitle,
+        project_overview: projectOverview,
+        key_contributions: [],
+        technical_highlights: [],
+        project_outcome: projectOutcome,
+      };
+      projects.push(currentProject);
     }
 
-    // start a new project block when project or project_type is present
-    if (rawProject) {
-      const typeKey = currentType || rawType || "main";
-
-      if (!groups[typeKey]) {
-        groups[typeKey] = [];
-      }
-
-      currentProject = { project: rawProject, description: [] };
-      groups[typeKey].push(currentProject);
+    if (!currentProject) {
+      continue;
     }
 
-    // if project_type is present but project isn't (rare), ensure we have currentType
-    if (rawType && !rawProject) {
-      if (!currentType) currentType = rawType;
-      if (!groups[currentType]) groups[currentType] = [];
+    if (keyContribution) {
+      currentProject.key_contributions.push(keyContribution);
     }
 
-    // append description rows to current project
-    if (rawDescription && currentProject) {
-      currentProject.description.push(rawDescription);
+    if (technicalHighlight) {
+      currentProject.technical_highlights.push(technicalHighlight);
     }
   }
 
-  return Object.keys(groups).length ? groups : DEFAULT_PROJECTS;
+  return projects.length ? projects : DEFAULT_PROJECTS;
 }
 
 async function fetchProjects() {
@@ -1370,6 +1404,13 @@ function App() {
   const [projectsModalOpen, setProjectsModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [activeEducationIndex, setActiveEducationIndex] = useState(null);
+  const mainProjects = useMemo(
+    () =>
+      projectsData.filter(
+        (project) => project.project_type?.toLowerCase() === "main",
+      ),
+    [projectsData],
+  );
 
   const openProjectModal = (project) => {
     setSelectedProject(project);
@@ -1799,34 +1840,37 @@ function App() {
           ) : null}
 
           <div className="project-grid">
-            {(projectsData?.main ?? []).map((proj, index) => (
-              <article
-                key={`${proj.project}-${index}`}
-                className="project-card glass-card"
-              >
-                <span className="project-index">0{index + 1}</span>
-                <h3 className="project-title">{proj.project}</h3>
-                <p className="project-summary">
-                  {proj.description?.length
-                    ? `${proj.description.length} project detail${
-                        proj.description.length > 1 ? "s" : ""
-                      } available`
-                    : "Project details will be updated soon."}
-                </p>
-                <div className="project-actions">
-                  <button
-                    type="button"
-                    className="project-view-button"
-                    onClick={() => openProjectModal(proj)}
-                  >
-                    <span>View Details</span>
-                    <span className="project-view-icon" aria-hidden="true">
+            {mainProjects.length ? (
+              mainProjects.map((proj, index) => (
+                <article
+                  key={`${proj.project_title}-${index}`}
+                  className="project-card glass-card"
+                >
+                  <span className="project-index">0{index + 1}</span>
+                  <h3 className="project-title">{proj.project_title}</h3>
+                  <p className="project-summary">
+                    {proj.project_overview ||
+                      "Project overview will be updated soon."}
+                  </p>
+                  <div className="project-actions">
+                    <button
+                      type="button"
+                      className="project-view-button"
+                      onClick={() => openProjectModal(proj)}
+                    >
+                      <span>View Details</span>
+                      <span className="project-view-icon" aria-hidden="true">
                       →
-                    </span>
-                  </button>
-                </div>
+                      </span>
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <article className="glass-card metric-card-message" role="status">
+                <span>No main projects found.</span>
               </article>
-            ))}
+            )}
           </div>
 
           {projectsModalOpen && selectedProject ? (
@@ -1848,7 +1892,9 @@ function App() {
                 <div className="modal-header">
                   <div>
                     <span className="modal-eyebrow">Project Details</span>
-                    <h3 id="project-modal-title">{selectedProject.project}</h3>
+                    <h3 id="project-modal-title">
+                      {selectedProject.project_title}
+                    </h3>
                   </div>
                   <button
                     type="button"
@@ -1860,16 +1906,47 @@ function App() {
                   </button>
                 </div>
                 <div className="modal-body">
-                  {selectedProject.description &&
-                  selectedProject.description.length ? (
-                    <ul>
-                      {selectedProject.description.map((d, i) => (
-                        <li key={`${d}-${i}`}>{d}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>No additional details available.</p>
-                  )}
+                  <section className="project-detail-section">
+                    <h4>Project Overview</h4>
+                    <p>
+                      {selectedProject.project_overview ||
+                        "Project overview will be updated soon."}
+                    </p>
+                  </section>
+
+                  <section className="project-detail-section">
+                    <h4>Key Contributions</h4>
+                    {selectedProject.key_contributions?.length ? (
+                      <ul>
+                        {selectedProject.key_contributions.map((item, i) => (
+                          <li key={`${item}-${i}`}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>No key contributions available yet.</p>
+                    )}
+                  </section>
+
+                  <section className="project-detail-section">
+                    <h4>Technical Highlights</h4>
+                    {selectedProject.technical_highlights?.length ? (
+                      <ul>
+                        {selectedProject.technical_highlights.map((item, i) => (
+                          <li key={`${item}-${i}`}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>No technical highlights available yet.</p>
+                    )}
+                  </section>
+
+                  <section className="project-detail-section">
+                    <h4>Project Outcome</h4>
+                    <p>
+                      {selectedProject.project_outcome ||
+                        "Project outcome will be updated soon."}
+                    </p>
+                  </section>
                 </div>
               </div>
             </div>

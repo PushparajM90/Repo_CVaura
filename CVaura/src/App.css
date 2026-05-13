@@ -796,6 +796,24 @@
   box-shadow: 0 12px 24px color-mix(in srgb, #000 18%, transparent);
 }
 
+.modal-body {
+  display: grid;
+  gap: 18px;
+}
+
+.project-detail-section {
+  display: grid;
+  gap: 10px;
+}
+
+.project-detail-section h4 {
+  margin: 0;
+  color: var(--text-strong);
+  font-family: var(--heading-font);
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
 .modal-body ul {
   margin: 0;
   padding: 0;
