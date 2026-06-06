@@ -164,99 +164,6 @@ const DEFAULT_SKILL_GROUPS = [
   },
 ];
 
-const LOGO_ITEMS = [
-  {
-    name: "Python",
-    image: "/legacy-assets/images/python_img.png",
-    href: "https://www.python.org/",
-  },
-  {
-    name: "AWS",
-    image: "/legacy-assets/images/aws.png",
-    href: "https://aws.amazon.com/",
-  },
-  {
-    name: "Django",
-    image: "/legacy-assets/images/dj.png",
-    href: "https://www.djangoproject.com/",
-  },
-  {
-    name: "PostgreSQL",
-    image: "/legacy-assets/images/p_sql.png",
-    href: "https://www.postgresql.org/",
-  },
-  {
-    name: "APIs",
-    image: "/legacy-assets/images/API.png",
-    href: "https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Client-side_web_APIs/Introduction",
-  },
-  {
-    name: "Bitbucket",
-    image: "/legacy-assets/images/bit.png",
-    href: "https://bitbucket.org/product/",
-  },
-  {
-    name: "Java",
-    image: "/legacy-assets/images/java.png",
-    href: "https://www.java.com/",
-  },
-  {
-    name: "JavaScript",
-    image: "/legacy-assets/images/js.png",
-    href: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
-  },
-  {
-    name: "jQuery",
-    image: "/legacy-assets/images/jq.png",
-    href: "https://jquery.com/",
-  },
-  {
-    name: "Materialize",
-    image: "/legacy-assets/images/Materialize.png",
-    href: "https://materializecss.com/",
-  },
-  {
-    name: "Bootstrap",
-    image: "/legacy-assets/images/Bootstrap.png",
-    href: "https://getbootstrap.com/",
-  },
-  {
-    name: "HTML",
-    image: "/legacy-assets/images/html.png",
-    href: "https://developer.mozilla.org/en-US/docs/Web/HTML",
-  },
-  {
-    name: "CSS",
-    image: "/legacy-assets/images/css.png",
-    href: "https://developer.mozilla.org/en-US/docs/Web/CSS",
-  },
-  {
-    name: "AMCharts",
-    image: "/legacy-assets/images/am.png",
-    href: "https://www.amcharts.com/",
-  },
-  {
-    name: "VS Code",
-    image: "/legacy-assets/images/vs.png",
-    href: "https://code.visualstudio.com/",
-  },
-  {
-    name: "Atom",
-    image: "/legacy-assets/images/atoms.png",
-    href: "https://atom-editor.cc/",
-  },
-  {
-    name: "PyCharm",
-    image: "/legacy-assets/images/pyc.png",
-    href: "https://www.jetbrains.com/pycharm/",
-  },
-  {
-    name: "Eclipse",
-    image: "/legacy-assets/images/eclipse.png",
-    href: "https://www.eclipse.org/",
-  },
-];
-
 const EDUCATION = [
   {
     title: "B.E Computer Science and Engineering",
@@ -919,6 +826,24 @@ function useTheme() {
   return [theme, setTheme];
 }
 
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() =>
+    typeof window === "undefined" ? false : window.matchMedia(query).matches,
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
+    const handleChange = () => setMatches(mediaQuery.matches);
+
+    handleChange();
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, [query]);
+
+  return matches;
+}
+
 function useScrollProgress() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const animationFrameRef = useRef(null);
@@ -1192,7 +1117,14 @@ function generateUniqueColors(count, theme) {
   return uniqueColors.slice(0, count);
 }
 
-function applyChartTextTheme({ root, theme, series, legend, chartTitle }) {
+function applyChartTextTheme({
+  root,
+  theme,
+  series,
+  legend,
+  chartTitle,
+  isMobile = false,
+}) {
   const strong = am5.Color.fromString(getContrastColor(theme, "strong"));
   const main = am5.Color.fromString(getContrastColor(theme, "main"));
   const muted = am5.Color.fromString(getContrastColor(theme, "muted"));
@@ -1213,11 +1145,25 @@ function applyChartTextTheme({ root, theme, series, legend, chartTitle }) {
   if (series) {
     series.labels.template.setAll({
       fill: strong,
-      fontSize: 12,
+      fontSize: isMobile ? 11 : 12,
+      ...(isMobile
+        ? {
+            text: "{category}: {value}",
+            maxWidth: 92,
+            oversizedBehavior: "wrap",
+            textAlign: "center",
+            lineHeight: 1.15,
+          }
+        : {}),
     });
 
     series.ticks.template.setAll({
       stroke: muted,
+      ...(isMobile
+        ? {
+            minDistance: 8,
+          }
+        : {}),
     });
 
     const tooltip = series.get("tooltip");
@@ -1238,12 +1184,19 @@ function applyChartTextTheme({ root, theme, series, legend, chartTitle }) {
   if (legend) {
     legend.labels.template.setAll({
       fill: strong,
-      fontSize: 13,
+      fontSize: isMobile ? 12 : 13,
+      ...(isMobile
+        ? {
+            maxWidth: 170,
+            oversizedBehavior: "wrap",
+            lineHeight: 1.2,
+          }
+        : {}),
     });
 
     legend.valueLabels.template.setAll({
       fill: main,
-      fontSize: 12,
+      fontSize: isMobile ? 11 : 12,
     });
   }
 }
@@ -1279,6 +1232,7 @@ function applyExportMenuIcon(menu) {
 
 function EducationChart({ data, theme, title }) {
   const chartRef = useRef(null);
+  const isMobileChart = useMediaQuery("(max-width: 760px)");
 
   useEffect(() => {
     const styles = getComputedStyle(document.documentElement);
@@ -1292,7 +1246,15 @@ function EducationChart({ data, theme, title }) {
     const chart = root.container.children.push(
       am5percent.PieChart.new(root, {
         layout: root.verticalLayout,
-        innerRadius: am5.percent(42),
+        innerRadius: am5.percent(isMobileChart ? 34 : 42),
+        ...(isMobileChart
+          ? {
+              paddingLeft: 8,
+              paddingRight: 8,
+              paddingTop: 6,
+              paddingBottom: 0,
+            }
+          : {}),
       }),
     );
 
@@ -1301,9 +1263,17 @@ function EducationChart({ data, theme, title }) {
         text: title,
         centerX: am5.percent(50),
         x: am5.percent(50),
-        fontSize: 16,
+        fontSize: isMobileChart ? 14 : 16,
         fontWeight: "600",
-        marginBottom: 14,
+        marginBottom: isMobileChart ? 10 : 14,
+        ...(isMobileChart
+          ? {
+              maxWidth: 220,
+              oversizedBehavior: "wrap",
+              textAlign: "center",
+              lineHeight: 1.2,
+            }
+          : {}),
       }),
     );
 
@@ -1313,6 +1283,14 @@ function EducationChart({ data, theme, title }) {
         categoryField: "category",
         legendLabelText: "{category}",
         legendValueText: "{value}",
+        alignLabels: true,
+        ...(isMobileChart
+          ? {
+              radius: am5.percent(58),
+              innerRadius: am5.percent(34),
+              labelsOversizedBehavior: "wrap",
+            }
+          : {}),
         tooltip: am5.Tooltip.new(root, {
           labelText: "{category}: {value}",
         }),
@@ -1339,12 +1317,27 @@ function EducationChart({ data, theme, title }) {
       am5.Legend.new(root, {
         centerX: am5.percent(50),
         x: am5.percent(50),
-        marginTop: 16,
+        marginTop: isMobileChart ? 10 : 16,
         useDefaultMarker: true,
+        ...(isMobileChart
+          ? {
+              width: am5.percent(100),
+              layout: root.verticalLayout,
+              paddingLeft: 8,
+              paddingRight: 8,
+            }
+          : {}),
       }),
     );
 
-    applyChartTextTheme({ root, theme, series, legend, chartTitle });
+    applyChartTextTheme({
+      root,
+      theme,
+      series,
+      legend,
+      chartTitle,
+      isMobile: isMobileChart,
+    });
     legend.data.setAll(series.dataItems);
 
     const exportingMenu = am5plugins_exporting.ExportingMenu.new(root, {
@@ -1375,7 +1368,7 @@ function EducationChart({ data, theme, title }) {
       exporting.dispose();
       root.dispose();
     };
-  }, [data, theme, title]);
+  }, [data, theme, title, isMobileChart]);
 
   return <div ref={chartRef} className="education-chart" />;
 }
@@ -1716,7 +1709,7 @@ function App() {
             />
           </span>
           <span>
-            <strong>CVaura</strong>
+            <strong>Resume | CVaura</strong>
             <small>Pushparaj Murugesan</small>
           </span>
         </a>
@@ -1771,7 +1764,24 @@ function App() {
       <main>
         <section id="home" className="hero-section section-block">
           <div className="hero-copy">
-            <p className="eyebrow">FULL-STACK ENGINEER</p>
+            <p
+              className="eyebrow hero-eyebrow"
+              aria-label="Full-stack developer, Python and Django specialist, backend and frontend engineer"
+            >
+              <span className="hero-eyebrow-item">FULL-STACK DEVELOPER</span>
+              <span className="hero-eyebrow-item">
+                <span className="hero-eyebrow-separator" aria-hidden="true">
+                  |
+                </span>
+                <span>PYTHON & DJANGO SPECIALIST</span>
+              </span>
+              <span className="hero-eyebrow-item">
+                <span className="hero-eyebrow-separator" aria-hidden="true">
+                  |
+                </span>
+                <span>BACKEND & FRONTEND ENGINEER</span>
+              </span>
+            </p>
             <h1>
               Building scalable business tools and modern web applications with
               clean architecture and real-world impact.
@@ -1958,7 +1968,7 @@ function App() {
                     >
                       <span>View Details</span>
                       <span className="project-view-icon" aria-hidden="true">
-                      →
+                        →
                       </span>
                     </button>
                   </div>
@@ -2103,21 +2113,6 @@ function App() {
                   <span>No skills found.</span>
                 </article>
               )}
-            </div>
-
-            <div className="logo-grid">
-              {LOGO_ITEMS.map((item) => (
-                <a
-                  key={item.name}
-                  className="logo-card glass-card"
-                  href={item.href}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <img src={item.image} alt={`${item.name} logo`} />
-                  <span>{item.name}</span>
-                </a>
-              ))}
             </div>
           </div>
         </section>
