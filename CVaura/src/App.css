@@ -326,6 +326,8 @@
   flex-wrap: wrap;
   max-width: 100%;
   line-height: 1.55;
+  justify-content: center;
+  text-align: center;
   overflow-wrap: normal;
   word-break: keep-all;
 }

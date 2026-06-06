@@ -1236,7 +1236,8 @@ function EducationChart({ data, theme, title }) {
 
   useEffect(() => {
     const styles = getComputedStyle(document.documentElement);
-    const borderStrong = styles.getPropertyValue("--border-strong").trim();
+    const surfaceGlass = styles.getPropertyValue("--surface-glass").trim();
+    const chartOutlineColor = am5.Color.fromString(surfaceGlass);
     const uniqueChartColors = generateUniqueColors(data.length, theme);
 
     const root = am5.Root.new(chartRef.current);
@@ -1300,7 +1301,7 @@ function EducationChart({ data, theme, title }) {
     series.slices.template.setAll({
       cornerRadius: 8,
       strokeWidth: 2,
-      stroke: am5.Color.fromString(borderStrong),
+      stroke: chartOutlineColor,
     });
 
     series.set(
@@ -1329,6 +1330,16 @@ function EducationChart({ data, theme, title }) {
           : {}),
       }),
     );
+
+    legend.markers?.template?.setAll({
+      stroke: chartOutlineColor,
+      strokeWidth: 2,
+    });
+
+    legend.markerRectangles?.template?.setAll({
+      stroke: chartOutlineColor,
+      strokeWidth: 2,
+    });
 
     applyChartTextTheme({
       root,
