@@ -1236,8 +1236,7 @@ function EducationChart({ data, theme, title }) {
 
   useEffect(() => {
     const styles = getComputedStyle(document.documentElement);
-    const surfaceGlass = styles.getPropertyValue("--surface-glass").trim();
-    const chartOutlineColor = am5.Color.fromString(surfaceGlass);
+    const chartOutlineColor = "#151b1116"; // 10% opacity black for outline
     const uniqueChartColors = generateUniqueColors(data.length, theme);
 
     const root = am5.Root.new(chartRef.current);
